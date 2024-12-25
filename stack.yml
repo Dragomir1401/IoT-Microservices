@@ -24,6 +24,7 @@ services:
       INFLUXDB_ADMIN_PASSWORD: adminpass
       INFLUXDB_ORG: my-org
       INFLUXDB_BUCKET: my-bucket
+      INFLUXDB_RETENTION_POLICY: ""
 
   grafana:
     image: grafana/grafana
@@ -35,8 +36,9 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: adminpass
+      - GF_SECURITY_ADMIN_USER=asistent
+      - GF_SECURITY_ADMIN_PASSWORD=grafanaSCD2024
+      - INFLUXDB_TOKEN=lGEBjReQ1Ss_TL-gRikLkemU3XhVYA7rIFhunhVo2fo8c0rAqe2QaQZ5WMfvHOPUbTYzKf1hKryFk7HNDZ4pog==
 
   mqtt-adaptor:
     image: mqtt-adaptor
@@ -49,10 +51,11 @@ services:
     environment:
       - MQTT_BROKER=tcp://mosquitto:1883
       - INFLUXDB_URL=http://influxdb:8086
-      - INFLUXDB_TOKEN=2uXS_lZCpul4dufOW7Eb5zTspd1D5eu4YZEAGlwZNwI4YdyNNvOIOJcVTaNshupPa3hyOXrix1dM2nne3pKbWg==
+      - INFLUXDB_TOKEN=lGEBjReQ1Ss_TL-gRikLkemU3XhVYA7rIFhunhVo2fo8c0rAqe2QaQZ5WMfvHOPUbTYzKf1hKryFk7HNDZ4pog==
       - INFLUXDB_PASSWORD=/run/secrets/influxdb_admin_password
       - INFLUXDB_ORG=SCD
-      - INFLUXDB_BUCKET=IoT
+      - INFLUXDB_BUCKET=SCD/IoT
+      - DEBUG_DATA_FLOW=true
 
 networks:
   mqtt_net:
@@ -64,3 +67,4 @@ networks:
 
 volumes:
   influxdb-data:
+    driver: local
