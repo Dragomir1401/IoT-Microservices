@@ -7,6 +7,8 @@ services:
       - "1883:1883"
     networks:
       - mqtt_net
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   influxdb:
     image: influxdb:2.0
@@ -30,21 +32,27 @@ services:
     networks:
       - grafana_net
     volumes:
-      - ./docker/grafana/provisioning:/etc/grafana/provisioning
-      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: adminpass
 
   mqtt-adaptor:
+    image: mqtt-adaptor
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     networks:
       - mqtt_net
       - database_net
     environment:
-      DEBUG_DATA_FLOW: "true"
+      - MQTT_BROKER=tcp://mosquitto:1883
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=2uXS_lZCpul4dufOW7Eb5zTspd1D5eu4YZEAGlwZNwI4YdyNNvOIOJcVTaNshupPa3hyOXrix1dM2nne3pKbWg==
+      - INFLUXDB_PASSWORD=/run/secrets/influxdb_admin_password
+      - INFLUXDB_ORG=SCD
+      - INFLUXDB_BUCKET=IoT
 
 networks:
   mqtt_net:
