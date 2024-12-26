@@ -2,6 +2,7 @@ package influx
 
 import (
 	"context"
+	"log"
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
@@ -14,7 +15,13 @@ type InfluxClient struct {
 }
 
 func NewInfluxClient(url, token, org, bucket string) *InfluxClient {
-	client := influxdb2.NewClient(url, token)
+	log.Printf("Using InfluxDB token: %s", token)
+
+	client := influxdb2.NewClientWithOptions(
+		url,
+		token,
+		influxdb2.DefaultOptions(),
+	)
 	return &InfluxClient{
 		client: client,
 		org:    org,

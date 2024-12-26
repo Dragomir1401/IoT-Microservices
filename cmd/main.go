@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -51,6 +52,17 @@ func main() {
 			return
 		}
 
+		// Split the topic into measurement and tags
+		topicParts := strings.Split(topic, "/")
+		if len(topicParts) != 2 {
+			log.Printf("Invalid topic format: %s", topic)
+			return
+		}
+
+		measurement := topicParts[0] // e.g., "UPB"
+		station := topicParts[1]     // e.g., "RPi_1"
+
+		// Parse timestamp or use the current time
 		timestamp := time.Now()
 		if data.Timestamp != "" {
 			parsedTime, err := time.Parse(time.RFC3339, data.Timestamp)
@@ -61,17 +73,21 @@ func main() {
 			}
 		}
 
-		tags := map[string]string{"topic": topic}
+		// Prepare tags and fields
+		tags := map[string]string{
+			"station": station, // Tag for the specific device/station
+		}
 		fields := map[string]interface{}{
 			"BAT":   data.BAT,
 			"HUMID": data.HUMID,
 			"TMP":   data.TMP,
 		}
 
-		if err := influxClient.WriteData("sensor_data", tags, fields, timestamp); err != nil {
+		// Write the data to InfluxDB
+		if err := influxClient.WriteData(measurement, tags, fields, timestamp); err != nil {
 			log.Printf("Failed to write data to InfluxDB: %v", err)
 		} else if debug {
-			log.Printf("Data written to InfluxDB: %v", fields)
+			log.Printf("Data written to InfluxDB: Measurement=%s, Tags=%v, Fields=%v", measurement, tags, fields)
 		}
 	}
 

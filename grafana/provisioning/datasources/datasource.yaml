@@ -5,7 +5,10 @@ datasources:
     type: influxdb
     url: http://influxdb:8086
     access: proxy
+    basicAuth: true
+    basicAuthUser: admin
+    basicAuthPassword: adminpass
     isDefault: true
-    database: my-bucket
-    user: admin
-    password: adminpass
+    database: SCD/IoT
+    jsonData:
+      httpMode: POST
