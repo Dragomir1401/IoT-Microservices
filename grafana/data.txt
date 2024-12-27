@@ -1,0 +1,29 @@
+from(bucket: "SCD/IoT")
+  |> range(start: -6h) // Ultimele 6 ore
+  |> filter(fn: (r) => r._measurement == "UPB") // Selectează doar datele UPB
+  |> map(fn: (r) => ({
+      _time: r._time,
+      _value: r._value,
+      series_name: r.station + "." + r._field, // Creează formatul STATIE.METRICĂ
+      count: 1.0 // Adaugă un contor pentru calculul mediei
+  }))
+  |> group(columns: ["series_name"]) // Grupăm pe baza seriei (STATIE.METRICĂ)
+  |> cumulativeSum(columns: ["_value", "count"]) // Suma cumulativă și contorul
+  |> map(fn: (r) => ({
+      _time: r._time,
+      _value: r._value / r.count, // Media aritmetică
+      series_name: r.series_name
+  }))
+  |> yield(name: "UPB Time Series")
+
+
+
+///////////////////////////////?
+
+
+
+from(bucket: "SCD/IoT")
+  |> range(start: -6h) // Last 6 hours
+  |> filter(fn: (r) => exists r._measurement) // Include all measurements
+  |> sort(columns: ["_time"], desc: true) // Sort by time in descending order
+  |> yield(name: "All Measurements Table")

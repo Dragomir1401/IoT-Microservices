@@ -1,0 +1,73 @@
+from(bucket: "SCD/IoT")
+  |> range(start: -48h) // Ultimele 48 de ore
+  |> filter(fn: (r) => r._field == "BAT") // Selectăm doar metrica BAT
+  |> map(fn: (r) => ({
+      _time: r._time,
+      _value: r._value,
+      series_name: r.station // Creează formatul NUME_STATIE
+  }))
+  |> group(columns: ["series_name"]) // Grupăm pe stație
+  |> aggregateWindow(every: 1s, fn: mean, createEmpty: false) // Media aritmetică pe fiecare secundă
+  |> yield(name: "Battery Time Series")
+
+
+
+//////////////////////
+
+
+
+measurement = "BAT"
+
+// Current Value (Last)
+current = from(bucket: "SCD/IoT")
+  |> range(start: -48h)
+  |> filter(fn: (r) => r._field == measurement)
+  |> group(columns: ["station"])
+  |> last()
+  |> rename(columns: {_value: "Current"})
+  |> keep(columns: ["station", "Current"])
+
+// Minimum Value
+min = from(bucket: "SCD/IoT")
+  |> range(start: -48h)
+  |> filter(fn: (r) => r._field == measurement)
+  |> group(columns: ["station"])
+  |> min()
+  |> rename(columns: {_value: "Min"})
+  |> keep(columns: ["station", "Min"])
+
+// Maximum Value
+max = from(bucket: "SCD/IoT")
+  |> range(start: -48h)
+  |> filter(fn: (r) => r._field == measurement)
+  |> group(columns: ["station"])
+  |> max()
+  |> rename(columns: {_value: "Max"})
+  |> keep(columns: ["station", "Max"])
+
+// Average Value
+avg = from(bucket: "SCD/IoT")
+  |> range(start: -48h)
+  |> filter(fn: (r) => r._field == measurement)
+  |> group(columns: ["station"])
+  |> mean()
+  |> rename(columns: {_value: "Avg"})
+  |> keep(columns: ["station", "Avg"])
+
+// Combine Current and Min
+current_min = join(tables: {current: current, min: min}, on: ["station"])
+
+// Combine Current, Min, and Max
+current_min_max = join(tables: {current_min: current_min, max: max}, on: ["station"])
+
+// Combine All (Current, Min, Max, Avg)
+stats = join(tables: {current_min_max: current_min_max, avg: avg}, on: ["station"])
+  |> map(fn: (r) => ({
+      Metric: r.station, // NUME_STATIE
+      Avg: r.Avg,        // Media valorilor
+      Current: r.Current, // Ultima valoare disponibilă
+      Max: r.Max,        // Valoarea maximă
+      Min: r.Min         // Valoarea minimă
+  }))
+  |> keep(columns: ["Metric", "Avg", "Current", "Max", "Min"]) // Control final asupra ordinii coloanelor
+  |> yield(name: "Battery Statistics Table")
