@@ -107,11 +107,11 @@
             "type": "influxdb",
             "uid": "fe83f44o3z3lsa"
           },
-          "query": "from(bucket: \"SCD/IoT\")\n  |> range(start: -6h) // Ultimele 6 ore\n  |> filter(fn: (r) => r._measurement == \"UPB\") // Selectează doar datele UPB\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value,\n      series_name: r.station + \".\" + r._field, // Creează formatul STATIE.METRICĂ\n      count: 1.0 // Adaugă un contor pentru calculul mediei\n  }))\n  |> group(columns: [\"series_name\"]) // Grupăm pe baza seriei (STATIE.METRICĂ)\n  |> cumulativeSum(columns: [\"_value\", \"count\"]) // Suma cumulativă și contorul\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value / r.count, // Media aritmetică\n      series_name: r.series_name\n  }))\n  |> yield(name: \"UPB Time Series\")\n",
+          "query": "from(bucket: \"SCD/IoT\")\n  |> range(start: -6h) // Ultimele 6 ore\n  |> filter(fn: (r) => r._measurement == \"UPB\") // Selectează doar datele UPB\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value,\n      series_name: r.station + \".\" + r._field, // Creează formatul STATIE.METRICĂ\n      count: 1.0 // Adaugă un contor pentru calculul mediei\n  }))\n  |> group(columns: [\"series_name\"]) // Grupăm pe baza seriei (STATIE.METRICĂ)\n  |> cumulativeSum(columns: [\"_value\", \"count\"]) // Suma cumulativă și contorul\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value / r.count, // Media aritmetică\n      series_name: r.series_name\n  }))\n  |> yield(name: \"UPB Time Series\")",
           "refId": "A"
         }
       ],
-      "title": "Grafic date",
+      "title": "Grafic Date",
       "type": "timeseries"
     },
     {
@@ -121,41 +121,12 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
             },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -182,42 +153,54 @@
       },
       "id": 2,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "frameIndex": 1,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "BAT {name=\"Dorinel\", station=\"Zeus\"}"
+          }
+        ]
       },
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "query": "from(bucket: \"SCD/IoT\")\n  |> range(start: -6h) // Last 6 hours\n  |> filter(fn: (r) => exists r._measurement) // Include all measurements\n  |> sort(columns: [\"_time\"], desc: true) // Sort by time in descending order\n  |> yield(name: \"All Measurements Table\")\n",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "fe83f44o3z3lsa"
+          },
+          "query": "from(bucket: \"SCD/IoT\")\n  |> range(start: -6h) // Last 6 hours\n  |> filter(fn: (r) => exists r._measurement)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value,\n      series_name: r.station + \".\" + r._field \n  }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"series_name\"], valueColumn: \"_value\")\n  |> sort(columns: [\"_time\"], desc: true) \n  |> yield(name: \"All Measurements Table\")\n",
           "refId": "A"
         }
       ],
       "title": "Tabel",
-      "type": "timeseries"
+      "type": "table"
     }
   ],
   "preload": false,
+  "refresh": "30s",
   "schemaVersion": 40,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
+  "timezone": "",
   "title": "UPB IoT Data",
   "uid": "fe83f7w7952bke",
-  "version": 8,
+  "version": 14,
   "weekStart": ""
 }

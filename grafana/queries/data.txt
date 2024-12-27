@@ -27,3 +27,19 @@ from(bucket: "SCD/IoT")
   |> filter(fn: (r) => exists r._measurement) // Include all measurements
   |> sort(columns: ["_time"], desc: true) // Sort by time in descending order
   |> yield(name: "All Measurements Table")
+
+
+
+
+  from(bucket: "SCD/IoT")
+    |> range(start: -6h) // Last 6 hours
+    |> filter(fn: (r) => exists r._measurement) // Include all measurements
+    |> map(fn: (r) => ({
+        _time: r._time,
+        _value: r._value,
+        series_name: r.station + "." + r._field // Join station and field for column names
+    }))
+    |> pivot(rowKey: ["_time"], columnKey: ["series_name"], valueColumn: "_value") // Create dynamic column names
+    |> sort(columns: ["_time"], desc: true) // Sort rows by time in descending order
+    |> yield(name: "All Measurements Table")
+
