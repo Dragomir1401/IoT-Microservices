@@ -15,9 +15,9 @@ def generate_payload():
     timestamp = current_time.isoformat()
 
     return {
-        "BAT": random.randint(80, 100),
-        "HUMID": round(random.uniform(50.0, 70.0), 1),
-        "TMP": round(random.uniform(20.0, 25.0), 1),
+        "BAT": random.randint(30, 100),
+        "HUMID": round(random.uniform(10.0, 70.0), 1),
+        "TMP": round(random.uniform(20.0, 40.0), 1),
         "timestamp": timestamp,
     }
 
@@ -35,7 +35,7 @@ def main():
                 client.publish(topic, message)
                 print(f"Published to {topic}: {message}")
 
-            time.sleep(0.5)
+            time.sleep(0.2)
 
     except KeyboardInterrupt:
         print("\nStopped publishing messages.")
