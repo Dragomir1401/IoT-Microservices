@@ -1,0 +1,15 @@
+apiVersion: 1
+
+providers:
+  - name: 'UPB IoT Data'
+    orgId: 1
+    folder: ''
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/upb
+  - name: 'Battery Dashboard'
+    orgId: 1
+    folder: ''
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/bat

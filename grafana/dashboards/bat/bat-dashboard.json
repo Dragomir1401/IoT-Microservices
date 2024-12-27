@@ -1,0 +1,225 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "fe83f44o3z3lsa"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "query": "from(bucket: \"SCD/IoT\")\n  |> range(start: -48h) // Ultimele 48 de ore\n  |> filter(fn: (r) => r._field == \"BAT\") // Selectăm doar metrica BAT\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value,\n      series_name: r.station // Creează formatul NUME_STATIE\n  }))\n  |> group(columns: [\"series_name\"]) // Grupăm pe stație\n  |> aggregateWindow(every: 1s, fn: mean, createEmpty: false) // Media aritmetică pe fiecare secundă\n  |> yield(name: \"Battery Time Series\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Statistic Aggreagation",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "fe83f44o3z3lsa"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "fe83f44o3z3lsa"
+          },
+          "query": "measurement = \"BAT\"\n\n// Current Value (Last)\ncurrent = from(bucket: \"SCD/IoT\")\n  |> range(start: -48h)\n  |> filter(fn: (r) => r._field == measurement)\n  |> group(columns: [\"station\"])\n  |> last()\n  |> rename(columns: {_value: \"Current\"})\n  |> keep(columns: [\"station\", \"Current\"])\n\n// Minimum Value\nmin = from(bucket: \"SCD/IoT\")\n  |> range(start: -48h)\n  |> filter(fn: (r) => r._field == measurement)\n  |> group(columns: [\"station\"])\n  |> min()\n  |> rename(columns: {_value: \"Min\"})\n  |> keep(columns: [\"station\", \"Min\"])\n\n// Maximum Value\nmax = from(bucket: \"SCD/IoT\")\n  |> range(start: -48h)\n  |> filter(fn: (r) => r._field == measurement)\n  |> group(columns: [\"station\"])\n  |> max()\n  |> rename(columns: {_value: \"Max\"})\n  |> keep(columns: [\"station\", \"Max\"])\n\n// Average Value\navg = from(bucket: \"SCD/IoT\")\n  |> range(start: -48h)\n  |> filter(fn: (r) => r._field == measurement)\n  |> group(columns: [\"station\"])\n  |> mean()\n  |> rename(columns: {_value: \"Avg\"})\n  |> keep(columns: [\"station\", \"Avg\"])\n\n// Combine Current and Min\ncurrent_min = join(tables: {current: current, min: min}, on: [\"station\"])\n\n// Combine Current, Min, and Max\ncurrent_min_max = join(tables: {current_min: current_min, max: max}, on: [\"station\"])\n\n// Combine All (Current, Min, Max, Avg)\nstats = join(tables: {current_min_max: current_min_max, avg: avg}, on: [\"station\"])\n  |> map(fn: (r) => ({\n      Metric: r.station, // NUME_STATIE\n      Avg: r.Avg,        // Media valorilor\n      Current: r.Current, // Ultima valoare disponibilă\n      Max: r.Max,        // Valoarea maximă\n      Min: r.Min         // Valoarea minimă\n  }))\n  |> keep(columns: [\"Metric\", \"Avg\", \"Current\", \"Max\", \"Min\"]) // Control final asupra ordinii coloanelor\n  |> yield(name: \"Battery Statistics Table\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Evolutia incarcarii bateriilor",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 40,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Battery dashboard",
+  "uid": "ee83fwpn8m9z4a",
+  "version": 6,
+  "weekStart": ""
+}

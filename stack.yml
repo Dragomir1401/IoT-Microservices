@@ -41,6 +41,9 @@ services:
       - grafana_net
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     environment:
       - GF_SECURITY_ADMIN_USER=asistent
       - GF_SECURITY_ADMIN_PASSWORD=grafanaSCD2024
