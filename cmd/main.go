@@ -20,6 +20,10 @@ type SensorData struct {
 	Timestamp string  `json:"timestamp"`
 }
 
+func isZeroOrNaN(value float64) bool {
+	return value == 0 || value != value // value != value checks for NaN
+}
+
 func main() {
 	mqttBroker := os.Getenv("MQTT_BROKER")
 	influxURL := os.Getenv("INFLUXDB_URL")
@@ -77,10 +81,30 @@ func main() {
 		tags := map[string]string{
 			"station": station, // Tag for the specific device/station
 		}
-		fields := map[string]interface{}{
-			"BAT":   data.BAT,
-			"HUMID": data.HUMID,
-			"TMP":   data.TMP,
+		fields := map[string]interface{}{}
+
+		if !isZeroOrNaN(data.BAT) {
+			fields["BAT"] = data.BAT
+		} else {
+			log.Printf("Invalid or missing numeric value for BAT, skipping...")
+		}
+
+		if !isZeroOrNaN(data.HUMID) {
+			fields["HUMID"] = data.HUMID
+		} else {
+			log.Printf("Invalid or missing numeric value for HUMID, skipping...")
+		}
+
+		if !isZeroOrNaN(data.TMP) {
+			fields["TMP"] = data.TMP
+		} else {
+			log.Printf("Invalid or missing numeric value for TMP, skipping...")
+		}
+
+		// If no valid fields, skip writing to InfluxDB
+		if len(fields) == 0 {
+			log.Printf("No valid numeric fields to write for topic [%s]", topic)
+			return
 		}
 
 		// Write the data to InfluxDB
