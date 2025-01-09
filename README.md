@@ -34,6 +34,8 @@ role in the MQTT-based IoT platform. Below is an overview of the stack configura
     - `grafana_net` for integration with Grafana.
 - **Deployment:**
     - Ensures high availability with `on-failure` restart policy.
+- **Auth** - Although no-auth was required, the InfluxDB was configured to use authentication for security reasons
+  and because influxdb2 was used (it does not support no-auth).
 
 ### **3. Grafana**
 - **Image:** `grafana/grafana`
@@ -101,31 +103,15 @@ This structure ensures clarity and a consistent hierarchy.
     - A `timestamp` key indicates the measurement time; if missing or invalid, the current time is used.
     - Non-numeric values and invalid messages are ignored.
 
-### **2. Authentication and Authorization**
-- **Authentication:**
-    - Implemented using the Mosquitto MQTT broker with authentication enabled via a `password_file`.
-    - Devices must provide valid credentials to connect.
-
-- **Authorization:**
-    - Permissions (read/write access) are managed through an `acl_file`.
-    - Permissions are dynamically updated based on user settings via a web interface.
-
-### **3. Web Interface for User Management**
-- A RESTful API (`auth-api`) is provided to:
-    - Create and manage user accounts.
-    - Define publish/subscribe permissions for topics.
-    - Retrieve and modify existing permissions.
-
-### **4. Persistence**
-- Configuration files (`password_file` and `acl_file`) and user permissions are stored persistently using Docker volumes.
+### **2. Persistence**
 - InfluxDB and Grafana are used for telemetry data storage and visualization, with their data persisted to dedicated volumes.
 
-### **5. Modular Design**
+### **3. Modular Design**
 - The system is containerized with the following services:
-    - **MQTT Broker:** Mosquitto configured with authentication and ACLs.
-    - **Auth API:** A web service to manage users and permissions.
-    - **MQTT Adaptor:** Connects IoT devices to InfluxDB and synchronizes broker configuration with the Auth API.
-    - **Database:** Stores user credentials and permissions.
+    - **MQTT Broker:** Mosquitto broker for IoT device communication.
+    - **MQTT Adaptor:** Connects IoT devices to InfluxDB and synchronizes broker configuration.
+    - **Database:** Stores data for IoT sensors measurements.
+    - **Grafana:** Provides visualization dashboards for the measurements.
 
 ---
 
@@ -162,9 +148,4 @@ Connect an MQTT client to the broker at mqtt://localhost:1883.
 All configuration files and databases are stored persistently in the ./volumes directory.
 Scalability:
 
-The modular design allows for easy scaling of individual components (e.g., multiple MQTT adaptors).
-
-#### Extensibility:
-
-Additional features, such as advanced permission management or encryption for sensitive data,
-can be added with minimal changes to the existing architecture.
+The modular design allows for easy scaling of individual components.
