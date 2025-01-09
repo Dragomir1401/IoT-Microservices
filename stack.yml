@@ -12,9 +12,6 @@ services:
 
   influxdb:
     image: influxdb:2.0
-#    TO DO: Remove port exposure for influxdb
-    ports:
-      - "8086:8086"
     networks:
       - database_net
       - grafana_net
