@@ -20,11 +20,13 @@ type SensorData struct {
 	Timestamp string  `json:"timestamp"`
 }
 
+// isZeroOrNaN checks if a float64 value is zero or NaN
 func isZeroOrNaN(value float64) bool {
-	return value == 0 || value != value // value != value checks for NaN
+	return value == 0 || value != value
 }
 
 func main() {
+	// Read environment variables
 	mqttBroker := os.Getenv("MQTT_BROKER")
 	influxURL := os.Getenv("INFLUXDB_URL")
 	influxToken := os.Getenv("INFLUXDB_TOKEN")
@@ -32,19 +34,21 @@ func main() {
 	influxBucket := os.Getenv("INFLUXDB_BUCKET")
 	debug := os.Getenv("DEBUG_DATA_FLOW") == "true"
 
+	// Force required environment variables
 	if mqttBroker == "" || influxURL == "" || influxToken == "" || influxOrg == "" || influxBucket == "" {
 		log.Fatal("Missing required environment variables")
 	}
 
+	// Create MQTT and InfluxDB clients
 	mqttClient, err := mqtt.NewMQTTClient(mqttBroker)
 	if err != nil {
 		log.Fatalf("Failed to connect to MQTT broker: %v", err)
 	}
 	defer mqttClient.Disconnect()
-
 	influxClient := influx.NewInfluxClient(influxURL, influxToken, influxOrg, influxBucket)
 	defer influxClient.Close()
 
+	// Define the message handler
 	messageHandler := func(topic string, payload []byte) {
 		if debug {
 			log.Printf("Received message on topic [%s]: %s", topic, payload)
@@ -63,10 +67,10 @@ func main() {
 			return
 		}
 
-		measurement := topicParts[0] // e.g., "UPB"
-		station := topicParts[1]     // e.g., "RPi_1"
+		measurement := topicParts[0] // location - "UPB"
+		station := topicParts[1]     // sensor - "RPi_1"
 
-		// Parse timestamp or use the current time
+		// Parse timestamp or use the current time if missing
 		timestamp := time.Now()
 		if data.Timestamp != "" {
 			parsedTime, err := time.Parse(time.RFC3339, data.Timestamp)
@@ -77,12 +81,13 @@ func main() {
 			}
 		}
 
-		// Prepare tags and fields
+		// Tag with the station name
 		tags := map[string]string{
-			"station": station, // Tag for the specific device/station
+			"station": station,
 		}
 		fields := map[string]interface{}{}
 
+		// Validate and skip data with all invalid or missing values
 		if !isZeroOrNaN(data.BAT) {
 			fields["BAT"] = data.BAT
 		} else {
@@ -115,13 +120,14 @@ func main() {
 		}
 	}
 
+	// Subscribe to all topics
 	if err := mqttClient.Subscribe("#", messageHandler); err != nil {
 		log.Fatalf("Failed to subscribe to MQTT topics: %v", err)
 	}
 
 	log.Println("MQTT adaptor is running...")
 
-	// Așteaptă semnal de oprire (Ctrl+C)
+	// Wait for termination signal using a Go primitive channel
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop

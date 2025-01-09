@@ -14,6 +14,7 @@ type InfluxClient struct {
 	bucket string
 }
 
+// NewInfluxClient creates a new InfluxDB client
 func NewInfluxClient(url, token, org, bucket string) *InfluxClient {
 	log.Printf("Using InfluxDB token: %s", token)
 
@@ -29,12 +30,14 @@ func NewInfluxClient(url, token, org, bucket string) *InfluxClient {
 	}
 }
 
+// WriteData writes data to InfluxDB
 func (i *InfluxClient) WriteData(metric string, tags map[string]string, fields map[string]interface{}, timestamp time.Time) error {
 	writeAPI := i.client.WriteAPIBlocking(i.org, i.bucket)
 	point := influxdb2.NewPoint(metric, tags, fields, timestamp)
 	return writeAPI.WritePoint(context.Background(), point)
 }
 
+// Close closes the InfluxDB client
 func (i *InfluxClient) Close() {
 	i.client.Close()
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+// TestMQTTClient tests the MQTT client
 func TestMQTTClient(t *testing.T) {
 	client, err := NewMQTTClient("tcp://localhost:1883")
 	if err != nil {

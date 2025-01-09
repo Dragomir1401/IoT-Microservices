@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// TestWriteData tests the WriteData function
 func TestWriteData(t *testing.T) {
 	client := NewInfluxClient("http://localhost:8086", "test-token", "test-org", "test-bucket")
 	defer client.Close()

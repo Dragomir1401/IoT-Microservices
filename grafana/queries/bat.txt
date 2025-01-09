@@ -1,13 +1,13 @@
 from(bucket: "SCD/IoT")
-  |> range(start: -48h) // Ultimele 48 de ore
-  |> filter(fn: (r) => r._field == "BAT") // Selectăm doar metrica BAT
+  |> range(start: -48h)
+  |> filter(fn: (r) => r._field == "BAT")
   |> map(fn: (r) => ({
       _time: r._time,
       _value: r._value,
-      series_name: r.station // Creează formatul NUME_STATIE
+      series_name: r.station
   }))
-  |> group(columns: ["series_name"]) // Grupăm pe stație
-  |> aggregateWindow(every: 1s, fn: mean, createEmpty: false) // Media aritmetică pe fiecare secundă
+  |> group(columns: ["series_name"]) // Group by station
+  |> aggregateWindow(every: 1s, fn: mean, createEmpty: false) // Average value every 1 second
   |> yield(name: "Battery Time Series")
 
 
@@ -63,11 +63,11 @@ current_min_max = join(tables: {current_min: current_min, max: max}, on: ["stati
 // Combine All (Current, Min, Max, Avg)
 stats = join(tables: {current_min_max: current_min_max, avg: avg}, on: ["station"])
   |> map(fn: (r) => ({
-      Metric: r.station, // NUME_STATIE
-      Avg: r.Avg,        // Media valorilor
-      Current: r.Current, // Ultima valoare disponibilă
-      Max: r.Max,        // Valoarea maximă
-      Min: r.Min         // Valoarea minimă
+      Metric: r.station,
+      Avg: r.Avg,
+      Current: r.Current,
+      Max: r.Max,
+      Min: r.Min
   }))
-  |> keep(columns: ["Metric", "Avg", "Current", "Max", "Min"]) // Control final asupra ordinii coloanelor
+  |> keep(columns: ["Metric", "Avg", "Current", "Max", "Min"]) // Try to control columns order
   |> yield(name: "Battery Statistics Table")
