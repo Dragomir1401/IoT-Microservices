@@ -3,9 +3,9 @@
 # Remove the existing stack if any
 echo "Removing existing stack (if any)..."
 docker stack rm scd3 2>/dev/null || echo "No stack to remove."
-sleep 5  # Allow time for cleanup
+sleep 5
 
-# Deploy the full stack with the correct token
+# Deploy the full stack
 echo "Deploying the full stack..."
 docker stack deploy --compose-file stack.yml scd3
 
