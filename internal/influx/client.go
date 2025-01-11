@@ -24,7 +24,7 @@ func NewInfluxClient(url, database string) *InfluxClient {
 
 // WriteData writes data to InfluxDB 1.x
 func (i *InfluxClient) WriteData(metric string, tags map[string]string, fields map[string]interface{}, timestamp time.Time) error {
-	// Construct the line protocol
+	// Construct the line protocol format: "measurement,tagKey=tagValue fieldKey=fieldValue timestamp"
 	var tagStrings []string
 	for k, v := range tags {
 		tagStrings = append(tagStrings, fmt.Sprintf("%s=%s", k, strings.ReplaceAll(v, " ", "\\ ")))
@@ -34,10 +34,12 @@ func (i *InfluxClient) WriteData(metric string, tags map[string]string, fields m
 		fieldStrings = append(fieldStrings, fmt.Sprintf("%s=%v", k, v))
 	}
 	line := fmt.Sprintf("%s,%s %s %d",
-		metric,
-		strings.Join(tagStrings, ","),
-		strings.Join(fieldStrings, ","),
-		timestamp.UnixNano())
+		metric,                          // measurement
+		strings.Join(tagStrings, ","),   // tags
+		strings.Join(fieldStrings, ","), // fields
+		timestamp.UnixNano())            // timestamp
+
+	log.Printf("[DEBUG] Constructed Line Protocol: %s", line)
 
 	// Send the line to InfluxDB
 	writeURL := fmt.Sprintf("%s/write?db=%s", i.url, i.database)
@@ -47,7 +49,9 @@ func (i *InfluxClient) WriteData(metric string, tags map[string]string, fields m
 	}
 	defer resp.Body.Close()
 
+	// Check the response status code
 	if resp.StatusCode != http.StatusNoContent {
+		log.Printf("[ERROR] Failed to write data to InfluxDB. Status Code: %d", resp.StatusCode)
 		return fmt.Errorf("failed to write data to InfluxDB: status code %d", resp.StatusCode)
 	}
 
