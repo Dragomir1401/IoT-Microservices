@@ -1,8 +1,8 @@
 # MQTT Adaptor Microservices IoT App
 
-This project implements an MQTT-based IoT adaptor with integrated authentication and dashboard visualization using Grafana.
-The solution manages MQTT topics, authenticates IoT devices, and authorizes their access to publish/subscribe
-to specific topics. It uses docker to manage the services for the adapter, mqtt broker, influxdb database and grafana dashboard.
+This project implements an MQTT-based IoT adaptor with integrated time-series data storage using InfluxDB 1.8
+(no authentication) and dashboard visualization using Grafana. The solution processes MQTT messages,
+writes the data to InfluxDB, and visualizes the data through pre-configured dashboards.
 
 ---
 
@@ -21,31 +21,29 @@ role in the MQTT-based IoT platform. Below is an overview of the stack configura
     - `mqtt_net` for communication with MQTT clients and the adaptor.
 
 ### **2. InfluxDB**
-- **Image:** `influxdb:2.0`
+- **Image:** `influxdb:1.8`
 - **Purpose:** Stores time-series data from IoT devices, with measurements, tags, and fields corresponding to sensor data.
 - **Configuration:**
     - Initialized with an admin user, organization, and bucket.
     - Environment variables are used for setup and authentication:
-        - `DOCKER_INFLUXDB_INIT_*` for initial setup.
-        - `DOCKER_INFLUXDB_HTTP_AUTH_ENABLED=true` for enabling HTTP authentication.
-    - Data is persisted to the volume `influxdb-data`.
+        - Authentication is disabled using the `INFLUXDB_HTTP_AUTH_ENABLED=false` environment variable.
+        - Flux query support is enabled with `INFLUXDB_FLUX_ENABLED=true`
+    - Data is persisted to the volume `influxdb1.8-data`.
 - **Networks:**
     - `database_net` for communication with the MQTT adaptor.
     - `grafana_net` for integration with Grafana.
 - **Deployment:**
     - Ensures high availability with `on-failure` restart policy.
-- **Auth** - Although no-auth was required, the InfluxDB was configured to use authentication for security reasons
-  and because influxdb2 was used (it does not support no-auth).
+- **Auth** - No authentication is enabled for InfluxDB.
 
 ### **3. Grafana**
 - **Image:** `grafana/grafana`
-- **Purpose:** Provides visualization dashboards for IoT telemetry data stored in InfluxDB.
+- **Purpose:** Provides visualization dashboards for IoT measured data stored in InfluxDB.
 - **Configuration:**
     - Pre-configured datasources and dashboards are provisioned via mounted directories.
     - Environment variables configure the admin credentials:
         - `GF_SECURITY_ADMIN_USER=asistent`
         - `GF_SECURITY_ADMIN_PASSWORD=grafanaSCD2024`
-    - InfluxDB token is passed via the environment for secure integration.
     - Data is persisted to the volume `grafana-data`.
 - **Networks:**
     - `grafana_net` for integration with InfluxDB.
@@ -56,7 +54,7 @@ role in the MQTT-based IoT platform. Below is an overview of the stack configura
 - **Configuration:**
     - Environment variables:
         - `MQTT_BROKER`: Connects to the Mosquitto broker.
-        - `INFLUXDB_URL`, `INFLUXDB_ORG`, `INFLUXDB_BUCKET`, and `INFLUXDB_TOKEN`: Configures InfluxDB connection and authentication.
+        - `INFLUXDB_URL`, `INFLUXDB_DATABASE`: Configures InfluxDB connection and database.
         - `DEBUG_DATA_FLOW`: Enables debug logging.
 - **Networks:**
     - `mqtt_net` for MQTT communication.
@@ -70,7 +68,7 @@ role in the MQTT-based IoT platform. Below is an overview of the stack configura
 - **`database_net`:**
     - Facilitates secure data transfer between the MQTT adaptor and InfluxDB.
 - **`grafana_net`:**
-    - Ensures seamless integration between Grafana and InfluxDB.
+    - Ensures integration between Grafana and InfluxDB.
 
 ---
 
@@ -78,7 +76,7 @@ role in the MQTT-based IoT platform. Below is an overview of the stack configura
 - **`influxdb-data`:**
     - Persists InfluxDB time-series data and configuration.
 - **`grafana-data`:**
-    - Stores Grafana dashboards and configurations for persistence across restarts.
+    - Stores Grafana dashboards and configurations for persistence when doing restarts.
 - **Custom Mounts:**
     - `mosquitto.conf`: Custom Mosquitto configuration.
     - Grafana provisioning directories for datasources and dashboards.
@@ -96,7 +94,7 @@ role in the MQTT-based IoT platform. Below is an overview of the stack configura
 
 ### **1. MQTT Topic and Payload Structure**
 - **Topic Format:** MQTT topics follow the format `<location>/<station>` (e.g., `UPB/RPi_1`). 
-This structure ensures clarity and a consistent hierarchy.
+This structure ensures a consistent hierarchy.
 - **Payload Format:**
     - The payload is a JSON dictionary with one level of nesting.
     - Keys represent sensor data fields (e.g., `BAT`, `HUMID`, `TMP`) and must be numeric.
@@ -146,6 +144,4 @@ Connect an MQTT client to the broker at mqtt://localhost:1883.
 #### Persistence:
 
 All configuration files and databases are stored persistently in the ./volumes directory.
-Scalability:
 
-The modular design allows for easy scaling of individual components.
