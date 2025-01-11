@@ -1,43 +1,61 @@
 package influx
 
 import (
-	"context"
+	"bytes"
+	"fmt"
 	"log"
+	"net/http"
+	"strings"
 	"time"
-
-	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 
 type InfluxClient struct {
-	client influxdb2.Client
-	org    string
-	bucket string
+	url      string
+	database string
 }
 
-// NewInfluxClient creates a new InfluxDB client
-func NewInfluxClient(url, token, org, bucket string) *InfluxClient {
-	log.Printf("Using InfluxDB token: %s", token)
-
-	client := influxdb2.NewClientWithOptions(
-		url,
-		token,
-		influxdb2.DefaultOptions(),
-	)
+// NewInfluxClient creates a new InfluxDB client for InfluxDB 1.x
+func NewInfluxClient(url, database string) *InfluxClient {
 	return &InfluxClient{
-		client: client,
-		org:    org,
-		bucket: bucket,
+		url:      url,
+		database: database,
 	}
 }
 
-// WriteData writes data to InfluxDB
+// WriteData writes data to InfluxDB 1.x
 func (i *InfluxClient) WriteData(metric string, tags map[string]string, fields map[string]interface{}, timestamp time.Time) error {
-	writeAPI := i.client.WriteAPIBlocking(i.org, i.bucket)
-	point := influxdb2.NewPoint(metric, tags, fields, timestamp)
-	return writeAPI.WritePoint(context.Background(), point)
+	// Construct the line protocol
+	var tagStrings []string
+	for k, v := range tags {
+		tagStrings = append(tagStrings, fmt.Sprintf("%s=%s", k, strings.ReplaceAll(v, " ", "\\ ")))
+	}
+	var fieldStrings []string
+	for k, v := range fields {
+		fieldStrings = append(fieldStrings, fmt.Sprintf("%s=%v", k, v))
+	}
+	line := fmt.Sprintf("%s,%s %s %d",
+		metric,
+		strings.Join(tagStrings, ","),
+		strings.Join(fieldStrings, ","),
+		timestamp.UnixNano())
+
+	// Send the line to InfluxDB
+	writeURL := fmt.Sprintf("%s/write?db=%s", i.url, i.database)
+	resp, err := http.Post(writeURL, "text/plain", bytes.NewBufferString(line))
+	if err != nil {
+		return fmt.Errorf("failed to write data to InfluxDB: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("failed to write data to InfluxDB: status code %d", resp.StatusCode)
+	}
+
+	log.Printf("Data written to InfluxDB: %s", line)
+	return nil
 }
 
-// Close closes the InfluxDB client
+// Close is a no-op for InfluxDB 1.x
 func (i *InfluxClient) Close() {
-	i.client.Close()
+	log.Println("InfluxDB 1.x client does not require explicit close")
 }

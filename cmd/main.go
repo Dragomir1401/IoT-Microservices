@@ -29,13 +29,24 @@ func main() {
 	// Read environment variables
 	mqttBroker := os.Getenv("MQTT_BROKER")
 	influxURL := os.Getenv("INFLUXDB_URL")
-	influxToken := os.Getenv("INFLUXDB_TOKEN")
-	influxOrg := os.Getenv("INFLUXDB_ORG")
-	influxBucket := os.Getenv("INFLUXDB_BUCKET")
+	//influxToken := os.Getenv("INFLUXDB_TOKEN")
+	//influxOrg := os.Getenv("INFLUXDB_ORG")
+	//influxBucket := os.Getenv("INFLUXDB_BUCKET")
+	influxDatabase := os.Getenv("INFLUXDB_DATABASE")
 	debug := os.Getenv("DEBUG_DATA_FLOW") == "true"
 
 	// Force required environment variables
-	if mqttBroker == "" || influxURL == "" || influxToken == "" || influxOrg == "" || influxBucket == "" {
+	//if mqttBroker == "" || influxURL == "" || influxToken == "" || influxOrg == "" || influxBucket == "" {
+	//	log.Printf("Environment Variables: MQTT_BROKER=%s, INFLUXDB_URL=%s, INFLUXDB_ORG=%s, INFLUXDB_BUCKET=%s",
+	//		mqttBroker, influxURL, influxOrg, influxBucket)
+	//
+	//	log.Fatal("Missing required environment variables")
+	//}
+
+	if mqttBroker == "" || influxURL == "" || influxDatabase == "" {
+		log.Printf("Environment Variables: MQTT_BROKER=%s, INFLUXDB_URL=%s, INFLUXDB_DATABASE=%s",
+			mqttBroker, influxURL, influxDatabase)
+
 		log.Fatal("Missing required environment variables")
 	}
 
@@ -45,7 +56,7 @@ func main() {
 		log.Fatalf("Failed to connect to MQTT broker: %v", err)
 	}
 	defer mqttClient.Disconnect()
-	influxClient := influx.NewInfluxClient(influxURL, influxToken, influxOrg, influxBucket)
+	influxClient := influx.NewInfluxClient(influxURL, influxDatabase)
 	defer influxClient.Close()
 
 	// Define the message handler
