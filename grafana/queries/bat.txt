@@ -1,4 +1,4 @@
-from(bucket: "SCD/IoT")
+from(bucket: "SCD_IoT")
   |> range(start: -48h)
   |> filter(fn: (r) => r._field == "BAT")
   |> map(fn: (r) => ({
@@ -19,7 +19,7 @@ from(bucket: "SCD/IoT")
 measurement = "BAT"
 
 // Current Value (Last)
-current = from(bucket: "SCD/IoT")
+current = from(bucket: "SCD_IoT")
   |> range(start: -48h)
   |> filter(fn: (r) => r._field == measurement)
   |> group(columns: ["station"])
@@ -28,7 +28,7 @@ current = from(bucket: "SCD/IoT")
   |> keep(columns: ["station", "Current"])
 
 // Minimum Value
-min = from(bucket: "SCD/IoT")
+min = from(bucket: "SCD_IoT")
   |> range(start: -48h)
   |> filter(fn: (r) => r._field == measurement)
   |> group(columns: ["station"])
@@ -37,7 +37,7 @@ min = from(bucket: "SCD/IoT")
   |> keep(columns: ["station", "Min"])
 
 // Maximum Value
-max = from(bucket: "SCD/IoT")
+max = from(bucket: "SCD_IoT")
   |> range(start: -48h)
   |> filter(fn: (r) => r._field == measurement)
   |> group(columns: ["station"])
@@ -46,7 +46,7 @@ max = from(bucket: "SCD/IoT")
   |> keep(columns: ["station", "Max"])
 
 // Average Value
-avg = from(bucket: "SCD/IoT")
+avg = from(bucket: "SCD_IoT")
   |> range(start: -48h)
   |> filter(fn: (r) => r._field == measurement)
   |> group(columns: ["station"])

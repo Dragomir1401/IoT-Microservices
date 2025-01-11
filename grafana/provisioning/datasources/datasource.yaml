@@ -9,6 +9,6 @@ datasources:
     basicAuthUser: admin
     basicAuthPassword: adminpass
     isDefault: true
-    database: SCD/IoT
+    database: SCD_IoT
     jsonData:
       httpMode: POST

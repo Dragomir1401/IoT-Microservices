@@ -1,4 +1,4 @@
-from(bucket: "SCD/IoT")
+from(bucket: "SCD_IoT")
   |> range(start: -6h)
   |> filter(fn: (r) => r._measurement == "UPB")
   |> map(fn: (r) => ({
@@ -22,7 +22,7 @@ from(bucket: "SCD/IoT")
 
 
 
-from(bucket: "SCD/IoT")
+from(bucket: "SCD_IoT")
   |> range(start: -6h)
   |> filter(fn: (r) => exists r._measurement) // Include all measurements
   |> sort(columns: ["_time"], desc: true) // Sort by time in descending order
@@ -31,7 +31,7 @@ from(bucket: "SCD/IoT")
 
 
 
-  from(bucket: "SCD/IoT")
+  from(bucket: "SCD_IoT")
     |> range(start: -6h)
     |> filter(fn: (r) => exists r._measurement) // Include all measurements
     |> map(fn: (r) => ({

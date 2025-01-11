@@ -107,7 +107,7 @@
             "type": "influxdb",
             "uid": "fe83f44o3z3lsa"
           },
-          "query": "from(bucket: \"SCD/IoT\")\n  |> range(start: -6h) // Ultimele 6 ore\n  |> filter(fn: (r) => r._measurement == \"UPB\") // Selectează doar datele UPB\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value,\n      series_name: r.station + \".\" + r._field, // Creează formatul STATIE.METRICĂ\n      count: 1.0 // Adaugă un contor pentru calculul mediei\n  }))\n  |> group(columns: [\"series_name\"]) // Grupăm pe baza seriei (STATIE.METRICĂ)\n  |> cumulativeSum(columns: [\"_value\", \"count\"]) // Suma cumulativă și contorul\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value / r.count, // Media aritmetică\n      series_name: r.series_name\n  }))\n  |> yield(name: \"UPB Time Series\")",
+          "query": "from(bucket: \"SCD_IoT\")\n  |> range(start: -6h) // Ultimele 6 ore\n  |> filter(fn: (r) => r._measurement == \"UPB\") // Selectează doar datele UPB\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value,\n      series_name: r.station + \".\" + r._field, // Creează formatul STATIE.METRICĂ\n      count: 1.0 // Adaugă un contor pentru calculul mediei\n  }))\n  |> group(columns: [\"series_name\"]) // Grupăm pe baza seriei (STATIE.METRICĂ)\n  |> cumulativeSum(columns: [\"_value\", \"count\"]) // Suma cumulativă și contorul\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value / r.count, // Media aritmetică\n      series_name: r.series_name\n  }))\n  |> yield(name: \"UPB Time Series\")",
           "refId": "A"
         }
       ],
@@ -178,7 +178,7 @@
             "type": "influxdb",
             "uid": "fe83f44o3z3lsa"
           },
-          "query": "from(bucket: \"SCD/IoT\")\n  |> range(start: -6h) // Last 6 hours\n  |> filter(fn: (r) => exists r._measurement)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value,\n      series_name: r.station + \".\" + r._field \n  }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"series_name\"], valueColumn: \"_value\")\n  |> sort(columns: [\"_time\"], desc: true) \n  |> yield(name: \"All Measurements Table\")\n",
+          "query": "from(bucket: \"SCD_IoT\")\n  |> range(start: -6h) // Last 6 hours\n  |> filter(fn: (r) => exists r._measurement)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _value: r._value,\n      series_name: r.station + \".\" + r._field \n  }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"series_name\"], valueColumn: \"_value\")\n  |> sort(columns: [\"_time\"], desc: true) \n  |> yield(name: \"All Measurements Table\")\n",
           "refId": "A"
         }
       ],
